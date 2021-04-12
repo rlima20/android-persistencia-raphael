@@ -21,11 +21,11 @@ public class ProdutoRepository {
         this.dao = dao;
     }
 
-    public void buscaProdutos(ProdutosCarregadosListener listener) {
+    public void buscaProdutos(DadosCarregadosListener<List<Produto>> listener) {
         buscaProdutosInternos(listener);
     }
 
-    private void buscaProdutosInternos(ProdutosCarregadosListener listener) {
+    private void buscaProdutosInternos(DadosCarregadosListener <List<Produto>> listener) {
         /**
          * Async task que busca internamente
          */
@@ -36,7 +36,7 @@ public class ProdutoRepository {
                 }).execute();
     }
 
-    private void buscaProdutosNaApi(ProdutosCarregadosListener listener) {
+    private void buscaProdutosNaApi(DadosCarregadosListener <List<Produto>> listener) {
         ProdutoService service = new EstoqueRetrofit().getProdutoService();
         Call<List<Produto>> call = service.buscaTodos();
 
@@ -53,7 +53,15 @@ public class ProdutoRepository {
                 .executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
-    public interface ProdutosCarregadosListener{
-        void quandoCarregados(List<Produto> produtos);
+    public void salva(Produto produto, DadosCarregadosListener<Produto> listener) {
+        new BaseAsyncTask<>(() -> {
+            long id = dao.salva(produto);
+            return dao.buscaProduto(id);
+        }, listener::quandoCarregados)
+                .execute();
+    }
+
+    public interface DadosCarregadosListener<T> {
+        void quandoCarregados(T resultado);
     }
 }
